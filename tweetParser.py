@@ -7,6 +7,7 @@
 # import environment, then import API keys from environment
 import pandas as pd
 import tweepy
+import time
 import os
 
 consumer_key = os.environ['twitter_consumer_key']
@@ -36,14 +37,15 @@ def parseTweets(targetNewsOrg_list,numCycles):
     It returns a  list of dictionaries with the following key:value 
     pairs for each tweet:
         - "handle":"handle" (str)
-        - "date":timestamp
+        - "count": count of tweet in order by date (int)
+        - "date":UNIX timestamp (int)
+        - "id":id (str)
         - "compound":value (float)
         - "positive":value (float)
         - "neutral":value (float)
         - "negative":value (float)
     """
-    # variable to store oldest tweet
-    oldest_tweet = None   
+
     
     # create an empty list to store dictionaries
     results_list = []
@@ -63,6 +65,12 @@ def parseTweets(targetNewsOrg_list,numCycles):
         # select the current news org from the list
         handle = targetNewsOrg_list[i]
         
+        # reset tweetCount
+        tweetCount = 1
+        
+        # reset variable to store oldest tweet with each new news org
+        oldest_tweet = None   
+        
         # iterate the necessary number of times to get the requested numTweets
         for i in range(numCycles):
             
@@ -72,21 +80,29 @@ def parseTweets(targetNewsOrg_list,numCycles):
             except Exception:
                 raise
             
-            for i in range(len(tweet_list)):
-                # iterate over each tweet in the list to run analysis
-                tweetAnalysis = analyzer.polarity_scores(tweet_list[i]['text'])
-            
+            # iterate over each tweet in the list to run analysis
+            for j in range(len(tweet_list)):
+                tweetAnalysis = analyzer.polarity_scores(tweet_list[j]['text'])
+                
+                # convert datetime string to a UNIX timestamp
+                tweetTime = time.mktime(time.strptime(tweet_list[j]['created_at'],
+                                                 "%a %b %d %H:%M:%S %z %Y"))
+                
                 # add dictionary holding results to results list
                 results_list.append({"handle":handle,
-                                     "date":tweet_list[i]['created_at'], 
+                                     "count":tweetCount,
+                                     "date":tweetTime, 
                                      "compound":tweetAnalysis['compound'],
                                      "positive":tweetAnalysis['pos'],
                                      "neutral":tweetAnalysis['neu'],
                                      "negative":tweetAnalysis['neg']})
-        
+                
+                # increment tweetCount
+                tweetCount += 1
+                
             # reduce max id by one so it doesn't skip a tweet next round
-            oldest_tweet = int(tweet_list[i]['id_str']) - 1
-   
+            oldest_tweet = int(tweet_list[j]['id_str']) - 1
+       
     # ----------------------------------------------------------------------
     # Step 3: Convert list containing all results to a dataframe and return
     # ----------------------------------------------------------------------
