@@ -44,6 +44,7 @@ def parseTweets(targetNewsOrg_list,numCycles):
         - "positive":value (float)
         - "neutral":value (float)
         - "negative":value (float)
+        - "text":tweet text (str)
     """
 
     
@@ -95,7 +96,8 @@ def parseTweets(targetNewsOrg_list,numCycles):
                                      "compound":tweetAnalysis['compound'],
                                      "positive":tweetAnalysis['pos'],
                                      "neutral":tweetAnalysis['neu'],
-                                     "negative":tweetAnalysis['neg']})
+                                     "negative":tweetAnalysis['neg'],
+                                     "text":tweet_list[j]['text']})
                 
                 # increment tweetCount
                 tweetCount += 1
